@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Course Recommendation Assistant</title>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #6366f1;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17, 24, 39, 0.9);
+      backdrop-filter: blur(10px);
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      padding: 20px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 900px;
+      height: 100%;
+      max-height: 90vh;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      background: var(--panel);
+      z-index: 10;
+    }
+
+    .fallback.hidden {
+      display: none;
+    }
+
+    .loader {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .retry-btn {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .retry-btn:hover {
+      opacity: 0.9;
+    }
+
+    footer {
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 768px) {
+      .chat-container {
+        border-radius: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>AI Shopping Agent</h1>
+    <p>Ask anything about shopping, products, or offers</p>
+  </header>
+
+  <main>
+    <div class="chat-container">
+
+      <!-- Loading / Error State -->
+      <div id="fallback" class="fallback">
+        <div class="loader"></div>
+        <h3>Loading chatbot...</h3>
+        <p>If this takes too long, try reloading.</p>
+        <button class="retry-btn" onclick="initChatbot()">Retry</button>
+      </div>
+
+      <!-- Chatbot will mount here -->
+      <div id="chatbot-root"></div>
+
+    </div>
+  </main>
+
+  <footer>
+    Powered by Flowise • Deployed on Vercel
+  </footer>
+
+  <script type="module">
+    let chatbotLoaded = false;
+
+    async function initChatbot() {
+      const fallback = document.getElementById("fallback");
+      fallback.classList.remove("hidden");
+
+      try {
+        const { default: Chatbot } = await import(
+          "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+        );
+
+        Chatbot.init({
+          chatflowid: "5268db3e-0f48-46ce-b803-34238f83260b", // <-- REPLACE WITH REAL ID
+          apiHost: "https://cloud.flowiseai.com",
+          theme: {
+            button: {
+              backgroundColor: "#6366f1"
+            }
+          }
+        });
+
+        chatbotLoaded = true;
+
+        // Hide loader after short delay for smooth UX
+        setTimeout(() => {
+          fallback.classList.add("hidden");
+        }, 1200);
+
+      } catch (error) {
+        console.error("Chatbot failed to load:", error);
+
+        fallback.innerHTML = `
+          <h3>⚠️ Failed to load chatbot</h3>
+          <p>Please check your connection or try again.</p>
+          <button class="retry-btn" onclick="initChatbot()">Retry</button>
+        `;
+      }
+    }
+
+    // Timeout fallback (in case script hangs)
+    setTimeout(() => {
+      if (!chatbotLoaded) {
+        console.warn("Chatbot load timeout");
+      }
+    }, 8000);
+
+    initChatbot();
+  </script>
+
+</body>
+</html>
